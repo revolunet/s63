@@ -5,9 +5,11 @@ var Raspi = require("raspi-io");
 
 var Rotary = require("./Rotary");
 var play = require("./sound").play;
+var sine = require("./sound").sine;
 
 var fs = require("fs");
 var path = require("path");
+var fetch = require("node-fetch");
 
 var board = new five.Board({
   io: new Raspi()
@@ -18,7 +20,8 @@ board.on("ready", function() {
   var hangupButton = new five.Button({
     pin: "GPIO21",
     isPullup: true,
-    holdtime: 200
+    invert: false,
+    holdtime: 10
   });
   var composeButton = new five.Button({
     pin: "GPIO17",
@@ -32,42 +35,63 @@ board.on("ready", function() {
     hangupButton
   });
 
-  hangupButton.on("hold", function() {
-    console.log("Button held");
-  });
+  //hangupButton.on("hold", function() {
+  //console.log("Button held");
+  //});
+
+  var speakers = [];
+
+  const stopAllSpeakers = () => {
+    speakers.forEach(speaker => speaker.end());
+  };
 
   hangupButton.on("up", function() {
-    //if (hangupButton.isClosed) {
-    console.log("up");
-    pin.high();
-    var stream = fs.createReadStream(path.join(__dirname, "..", "Canon.mp3"));
-    play(stream);
     // porteuse OU repond à un call
-    // }
+    // play sound
+    console.log("pickup");
+    speakers.push(sine());
   });
+
   hangupButton.on("down", function() {
-    // if (hangupButton.isOpen) {
-    console.log("down");
-    pin.low();
-    // }
+    console.log("HANG UP");
+    stopAllSpeakers();
   });
 
   // composeButton.on("hold", function() {
   //   console.log( "composeButton held" );
   // });
 
+  const NUMBERS = {
+    "1": {
+      action: "play",
+      url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    },
+    "2": {
+      action: "play",
+      url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+    },
+    "3": {
+      action: "play",
+      url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+    }
+  };
+
   var rotary = new Rotary();
   rotary.on("compositionend", number => {
     console.log("compositionend", number);
+    let action = NUMBERS[`${number}`];
+    if (action) {
+      fetch(action.url).then(function(res) {
+        stopAllSpeakers();
+        speakers.push(play(res.body));
+      });
+    }
   });
 
   composeButton.on("up", function() {
-    //if (composeButton.isClosed) {
-    ///console.log("composeButton up")
     rotary.onPulse();
-    // pin.high()
-    // }
   });
+
   composeButton.on("down", function() {
     // if (composeButton.isOpen) {
     // console.log("composeButton down")

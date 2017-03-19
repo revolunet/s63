@@ -1,3 +1,5 @@
+"use strict";
+
 var EventEmitter = require('events').EventEmitter;
 
 const PULSE_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
@@ -11,6 +13,9 @@ class Rotary extends EventEmitter {
     this.pulseCount = 0;
   }
   onPulse() {
+    if (this.pulseCount === 0) {
+      this.emit('compositionstart');
+    }
     this.pulseCount++;
     if (this.pulseTimeout) {
       clearTimeout(this.pulseTimeout);
