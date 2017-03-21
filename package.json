@@ -18,6 +18,7 @@
     "johnny-five": "^0.10.6",
     "lame": "^1.2.4",
     "node-fetch": "^1.6.3",
+    "player": "^0.6.1",
     "raspi-io": "^7.2.4",
     "speaker": "^0.3.0"
   }

@@ -3,9 +3,9 @@ var Speaker = require("speaker");
 var Oscillator = require("audio-oscillator");
 
 function play(stream) {
-  var decoder = new lame.Decoder();
   var speaker = new Speaker();
-  stream.pipe(decoder).pipe(speaker);
+  //speaker.on('finish', () => { console.log('stream finished') });
+  stream.pipe(new lame.Decoder()).pipe(speaker);
   return speaker;
 }
 

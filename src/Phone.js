@@ -11,19 +11,76 @@ var fs = require("fs");
 var path = require("path");
 var fetch = require("node-fetch");
 
+//var Player = require('player');
+
 var board = new five.Board({
   io: new Raspi()
 });
 
+class Player {
+  constructor() {
+    this.playing = null;
+    this.sine = this.sine.bind(this);
+  }
+  stop() {
+    board.info("Player", "stop");
+    if (this.playing) {
+      this.playing.removeListener("finish", this.sine);
+      this.playing.end();
+      this.playing = null;
+    }
+  }
+  sine() {
+    board.info("Player", "sine");
+    this.stop();
+    this.playing = sine();
+  }
+  play(stream) {
+    board.info("Player", "play");
+    this.stop();
+    const speaker = play(stream);
+    this.playing = speaker;
+    speaker.on("finish", this.sine);
+  }
+}
+
+var player = new Player();
+
+const SOUNDS_PATH = path.join(__dirname, "..", "sounds");
+let SOUNDS = [];
+
+const getLocalSoundPath = relativePath =>
+  path.join(__dirname, "..", "sounds", relativePath);
+
+const pickRandom = arr => arr[Math.floor(Math.random() * arr.length)];
+
+// populate sounds
+fs.readdir(SOUNDS_PATH, function(err, items) {
+  SOUNDS = items.filter(item => item.match(/\.mp3$/));
+});
+
+const playLocalSound = (relativePath, cb) => {
+  board.info("playLocalSound", relativePath);
+  player.play(fs.createReadStream(getLocalSoundPath(relativePath)));
+};
+
+//playLocalSound("sos-amitie.ogg");
+
 board.on("ready", function() {
-  var pin = new five.Pin(7);
+  var ringRelay = new five.Relay({
+    pin: "GPIO4",
+    type: "NC"
+  });
+  ringRelay.open();
+
   var hangupButton = new five.Button({
     pin: "GPIO21",
     isPullup: true,
     invert: false,
     holdtime: 10
   });
-  var composeButton = new five.Button({
+
+  var rotaryButton = new five.Button({
     pin: "GPIO17",
     isPullup: true,
     holdtime: 10,
@@ -31,83 +88,34 @@ board.on("ready", function() {
   });
 
   board.repl.inject({
-    pin,
+    ringRelay,
     hangupButton
   });
 
-  //hangupButton.on("hold", function() {
-  //console.log("Button held");
-  //});
-
-  var speakers = [];
-
-  const stopAllSpeakers = () => {
-    speakers.forEach(speaker => speaker.end());
-  };
-
   hangupButton.on("up", function() {
     // porteuse OU repond à un call
-    // play sound
-    console.log("pickup");
-    speakers.push(sine());
+    board.info("Phone", "PICK UP");
+    ringRelay.open();
+    player.sine();
   });
 
   hangupButton.on("down", function() {
     console.log("HANG UP");
-    stopAllSpeakers();
+    board.info("Phone", "HANG UP");
+    player.stop();
+    ringRelay.open();
   });
 
-  // composeButton.on("hold", function() {
-  //   console.log( "composeButton held" );
-  // });
+  const rotary = new Rotary();
 
-  const NUMBERS = {
-    "1": {
-      action: "play",
-      url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-    },
-    "2": {
-      action: "play",
-      url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
-    },
-    "3": {
-      action: "play",
-      url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
-    }
-  };
-
-  var rotary = new Rotary();
   rotary.on("compositionend", number => {
-    console.log("compositionend", number);
-    let action = NUMBERS[`${number}`];
-    if (action) {
-      fetch(action.url).then(function(res) {
-        stopAllSpeakers();
-        speakers.push(play(res.body));
-      });
-    }
+    board.info("Rotary", `COMPOSE ${number}`);
+    player.stop();
+    const sound = pickRandom(SOUNDS);
+    board.info("Phone", `START Play ${sound}`);
+    playLocalSound(sound);
   });
 
-  composeButton.on("up", function() {
-    rotary.onPulse();
-  });
+  rotaryButton.on("up", () => rotary.onPulse())
 
-  composeButton.on("down", function() {
-    // if (composeButton.isOpen) {
-    // console.log("composeButton down")
-    //pin.low()
-    // }
-  });
-
-  //pin.high()
-
-  // setTimeout(() => {
-  // pin.low()
-  // }, 1000);
-  // setTimeout(() => {
-  // pin.high()
-  // }, 2000);
-  // setTimeout(() => {
-  // pin.low()
-  // }, 3000);
 });
