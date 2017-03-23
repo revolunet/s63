@@ -4,7 +4,7 @@ var EventEmitter = require('events').EventEmitter;
 
 const PULSE_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
 const PULSE_TIMEOUT = 500;
-const COMPOSE_TIMEOUT = 1000;
+const COMPOSE_TIMEOUT = 2000;
 
 class Rotary extends EventEmitter {
   constructor() {

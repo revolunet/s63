@@ -1,70 +1,38 @@
 "use strict";
 
-var five = require("johnny-five");
-var Raspi = require("raspi-io");
-
-var Rotary = require("./Rotary");
-var play = require("./sound").play;
-var sine = require("./sound").sine;
-
 var fs = require("fs");
 var path = require("path");
 var fetch = require("node-fetch");
+var five = require("johnny-five");
+var Raspi = require("raspi-io");
+var infoclimat = require("infoclimat");
 
-//var Player = require('player');
+var Rotary = require("./Rotary");
+var Player = require("./Player");
+var scan = require('./sound').scan;
 
-var board = new five.Board({
-  io: new Raspi()
-});
 
-class Player {
-  constructor() {
-    this.playing = null;
-    this.sine = this.sine.bind(this);
-  }
-  stop() {
-    board.info("Player", "stop");
-    if (this.playing) {
-      this.playing.removeListener("finish", this.sine);
-      this.playing.end();
-      this.playing = null;
-    }
-  }
-  sine() {
-    board.info("Player", "sine");
-    this.stop();
-    this.playing = sine();
-  }
-  play(stream) {
-    board.info("Player", "play");
-    this.stop();
-    const speaker = play(stream);
-    this.playing = speaker;
-    speaker.on("finish", this.sine);
-  }
-}
-
-var player = new Player();
-
-const SOUNDS_PATH = path.join(__dirname, "..", "sounds");
-let SOUNDS = [];
-
-const getLocalSoundPath = relativePath =>
-  path.join(__dirname, "..", "sounds", relativePath);
+// populate available sounds
+const getLocalSoundPath = relativePath => path.join(SOUNDS_PATH, relativePath);
 
 const pickRandom = arr => arr[Math.floor(Math.random() * arr.length)];
 
-// populate sounds
-fs.readdir(SOUNDS_PATH, function(err, items) {
-  SOUNDS = items.filter(item => item.match(/\.mp3$/));
-});
+const playStream = stream => {
+  board.info("playStream");
+  player.play(stream);
+};
 
 const playLocalSound = (relativePath, cb) => {
   board.info("playLocalSound", relativePath);
-  player.play(fs.createReadStream(getLocalSoundPath(relativePath)));
+  playStream(fs.createReadStream(getLocalSoundPath(relativePath)));
 };
 
-//playLocalSound("sos-amitie.ogg");
+const SOUNDS_PATH = path.join(__dirname, "..", "sounds");
+const SOUNDS = scan(SOUNDS_PATH);
+
+const board = new five.Board({ io: new Raspi() });
+
+const player = new Player();
 
 board.on("ready", function() {
   var ringRelay = new five.Relay({
@@ -87,10 +55,10 @@ board.on("ready", function() {
     invert: true
   });
 
-  board.repl.inject({
-    ringRelay,
-    hangupButton
-  });
+  // board.repl.inject({
+  //   ringRelay,
+  //   hangupButton
+  // });
 
   hangupButton.on("up", function() {
     // porteuse OU repond à un call
@@ -100,7 +68,6 @@ board.on("ready", function() {
   });
 
   hangupButton.on("down", function() {
-    console.log("HANG UP");
     board.info("Phone", "HANG UP");
     player.stop();
     ringRelay.open();
@@ -108,14 +75,39 @@ board.on("ready", function() {
 
   const rotary = new Rotary();
 
+  const getUrlStream = url => fetch(url).then(res => res.body).catch(e => console.log(e));
+  const getTTSStream = text => getUrlStream(`http://translate.google.com/translate_tts?tl=fr&q=${encodeURIComponent(text)}&client=gtx&ie=UTF-8`);
+
+  // define some callbacks
+  const callbacks = {
+    // ask meteo
+    "1": () => {
+      board.info("METEO", `fetch data`);
+      infoclimat.getTodayWeatherInFrench("48.856578,2.351828").then(text => {
+        const fullText = `Bonjour, ${text}. Voila voila !`;
+        board.info("METEO", fullText);
+        getTTSStream(fullText).then(playStream);
+      });
+    },
+    // default behaviour : play some sound from the SOUNDS_PATH folders
+    default: number => {
+      const soundPath = (SOUNDS[number] && number) || "default";
+      const sounds = SOUNDS[soundPath];
+      let sound = soundPath + "/" + pickRandom(sounds);
+      board.info("Phone", `START Play ${sound}`);
+      playLocalSound(sound);
+    }
+  };
   rotary.on("compositionend", number => {
     board.info("Rotary", `COMPOSE ${number}`);
     player.stop();
-    const sound = pickRandom(SOUNDS);
-    board.info("Phone", `START Play ${sound}`);
-    playLocalSound(sound);
+    // some callback for this number
+    if (callbacks[number]) {
+      callbacks[number]();
+    } else {
+      callbacks.default(number);
+    }
   });
 
-  rotaryButton.on("up", () => rotary.onPulse())
-
+  rotaryButton.on("up", () => rotary.onPulse());
 });
