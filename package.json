@@ -22,6 +22,7 @@
     "node-fetch": "^1.6.3",
     "player": "^0.6.1",
     "raspi-io": "^7.2.4",
-    "speaker": "^0.3.0"
+    "speaker": "^0.3.0",
+    "xstream": "^10.3.0"
   }
 }
