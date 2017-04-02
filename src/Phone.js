@@ -160,7 +160,7 @@ board.on("ready", function() {
       const numberPath = (SOUNDS[number] && number) || "default";
       const sounds = SOUNDS[numberPath];
       const modulePath = path.join(PLAN_PATH, number, 'index.js');
-      if (fs.statSync(modulePath).isFile()) {
+      if (fs.existsSync(modulePath) && fs.statSync(modulePath).isFile()) {
         board.info("Phone", `detected index.js, execute`);
         const numberModule = require(modulePath)
         numberModule({
