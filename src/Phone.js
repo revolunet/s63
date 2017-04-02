@@ -3,14 +3,13 @@
 var fs = require("fs");
 var os = require("os");
 var path = require("path");
-var fetch = require("node-fetch");
 var five = require("johnny-five");
+var fetch = require("node-fetch");
 
 if (os.platform() !== 'darwin') {
   var Raspi = require("raspi-io");
 }
 
-var infoclimat = require("infoclimat");
 var xs = require('xstream').default;
 var fromEvent = require('xstream/extra/fromEvent').default;
 var delay = require('xstream/extra/delay').default;
@@ -19,26 +18,30 @@ var Rotary = require("./Rotary");
 var Player = require("./Player");
 var scan = require('./sound').scan;
 
-
-// populate available sounds
-const getLocalSoundPath = relativePath => path.join(SOUNDS_PATH, relativePath);
-
 const getUrlStream = url => fetch(url).then(res => res.body).catch(e => console.log(e));
 const getTTSStream = text => getUrlStream(`http://translate.google.com/translate_tts?tl=fr&q=${encodeURIComponent(text)}&client=gtx&ie=UTF-8`);
+
+const getLocalSoundPath = relativePath => path.join(PLAN_PATH, relativePath);
+
 const pickRandom = arr => arr[Math.floor(Math.random() * arr.length)];
 
 const playStream = stream => {
   board.info("playStream", "");
-  player.play(stream);
+  return player.play(stream);
 };
 
 const playLocalSound = (relativePath, cb) => {
   board.info("playLocalSound", relativePath);
-  playStream(fs.createReadStream(getLocalSoundPath(relativePath)));
+  return playStream(fs.createReadStream(getLocalSoundPath(relativePath)));
 };
 
-const SOUNDS_PATH = path.join(__dirname, "..", "sounds");
-const SOUNDS = scan(SOUNDS_PATH);
+const playText = text => {
+  return getTTSStream(text).then(playStream)
+}
+
+
+const PLAN_PATH = path.join(__dirname, "..", "plan");
+const SOUNDS = scan(PLAN_PATH);
 
 const board = new five.Board({ io: Raspi && new Raspi() || null });
 
@@ -140,31 +143,42 @@ board.on("ready", function() {
   const rotary = new Rotary();
 
 
-  // define some callbacks
+  // define some internal callbacks
   const callbacks = {
-    // ask meteo
-    "1": () => {
-      board.info("METEO", `fetch data`);
-      infoclimat.getTodayWeatherInFrench("48.856578,2.351828").then(text => {
-        const fullText = `Bonjour, ${text}. Voila voila !`;
-        board.info("METEO", fullText);
-        getTTSStream(fullText).then(playStream);
-      });
-    },
-     "4": () => {
+     "99": () => {
       board.info("DEBUG", `debug`);
       setTimeout(() => {
         board.info("DEBUG", `timeout`);
         getTTSStream("Bonjour, Comment allez-vous aujourd'hui ?").then(placeCall);
       }, 3000)
     },
-    // default behaviour : play some sound from the SOUNDS_PATH folders
+    // default behaviour :
+    //   - if index.js is present in the number folder, use it
+    //   - play some sound from the number folder
     default: number => {
-      const soundPath = (SOUNDS[number] && number) || "default";
-      const sounds = SOUNDS[soundPath];
-      let sound = soundPath + "/" + pickRandom(sounds);
-      board.info("Phone", `START Play ${sound}`);
-      playLocalSound(sound);
+      board.info("Phone", `fallback number`);
+      const numberPath = (SOUNDS[number] && number) || "default";
+      const sounds = SOUNDS[numberPath];
+      const modulePath = path.join(PLAN_PATH, number, 'index.js');
+      if (fs.statSync(modulePath).isFile()) {
+        board.info("Phone", `detected index.js, execute`);
+        const numberModule = require(modulePath)
+        numberModule({
+          playText: playText,
+          playStream: playStream
+        })
+      } else {
+        // play random sound
+        const pickedSound = pickRandom(sounds);
+        const sound = numberPath + "/" + pickedSound;
+        if (pickedSound) {
+          board.info("Phone", `START Play ${sound}`);
+          playLocalSound(sound);
+        } else {
+          board.error("Phone", `CANNOT Play sound ${sound}`);
+        }
+
+      }
     }
   };
   rotary.on("compositionend", number => {
