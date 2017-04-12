@@ -25,6 +25,15 @@ const getLocalSoundPath = relativePath => path.join(PLAN_PATH, relativePath);
 
 const pickRandom = arr => arr[Math.floor(Math.random() * arr.length)];
 
+
+const playSilence = duration => new Promise((resolve, reject) => {
+  board.info("playSilence", duration);
+  player.stop();
+  setTimeout(() => {
+    resolve()
+  }, duration * 1000)
+})
+
 const playStream = stream => {
   board.info("playStream", "");
   return player.play(stream);
@@ -165,6 +174,7 @@ board.on("ready", function() {
         const numberModule = require(modulePath)
         numberModule({
           playText: playText,
+          playSilence: playSilence,
           playStream: playStream
         })
       } else {
