@@ -39,6 +39,11 @@ const playStream = (stream, options) => {
   return player.play(stream, options);
 };
 
+const playSine = () => {
+  board.info("playSine");
+  return player.sine();
+};
+
 const playLocalSound = (relativePath, cb) => {
   board.info("playLocalSound", relativePath);
   return playStream(fs.createReadStream(getLocalSoundPath(relativePath)));
@@ -175,7 +180,9 @@ board.on("ready", function() {
         numberModule({
           playText: playText,
           playSilence: playSilence,
-          playStream: playStream
+          playStream: playStream,
+          playSine: playSine,
+          hangupButton$: hangupButton$
         })
       } else {
         // play random sound
