@@ -2,7 +2,6 @@
 const pickRandom = items => items[Math.floor(Math.random() * items.length)];
 
 function callback({
-  playStream,
   playSilence,
   playText
 }) {
@@ -13,12 +12,12 @@ function callback({
 
   let promise = Promise.resolve()
   if (title) {
-    promise = promise.then(() => playText(title))
+    promise = promise.then(() => playText(title, { sine: false }))
   }
   if (text) {
     if (title) {
       // add a silence if two parts
-      promise = promise.then(() => playSilence(5));
+      promise = promise.then(() => playSilence(3));
     }
     promise = promise.then(() => playText(text));
   }

@@ -6,7 +6,7 @@ ssh : pi / socotels63
 
 ## Dial Plan
 
-defined by FS in `/plan` folder
+defined by filesystem in `/plan` folder
 
 ex:
 
@@ -20,6 +20,7 @@ ex:
  - 1: prochaine météo
  - 2: blagues
  - 3: repliques de films
+ - 4: news lemonde.fr
  - 42: surprise
  - 69: coluche
  - 99: random sounds

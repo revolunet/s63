@@ -26,7 +26,7 @@ const getLocalSoundPath = relativePath => path.join(PLAN_PATH, relativePath);
 const pickRandom = arr => arr[Math.floor(Math.random() * arr.length)];
 
 
-const playSilence = duration => new Promise((resolve, reject) => {
+const playSilence = (duration) => new Promise((resolve, reject) => {
   board.info("playSilence", duration);
   player.stop();
   setTimeout(() => {
@@ -34,9 +34,9 @@ const playSilence = duration => new Promise((resolve, reject) => {
   }, duration * 1000)
 })
 
-const playStream = stream => {
-  board.info("playStream", "");
-  return player.play(stream);
+const playStream = (stream, options) => {
+  board.info("playStream", options);
+  return player.play(stream, options);
 };
 
 const playLocalSound = (relativePath, cb) => {
@@ -44,8 +44,8 @@ const playLocalSound = (relativePath, cb) => {
   return playStream(fs.createReadStream(getLocalSoundPath(relativePath)));
 };
 
-const playText = text => {
-  return getTTSStream(text).then(playStream)
+const playText = (text, options) => {
+  return getTTSStream(text).then(stream => playStream(stream, options))
 }
 
 

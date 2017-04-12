@@ -16,6 +16,7 @@
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-stage-0": "^6.5.0",
     "date-fns": "^1.28.1",
+    "feedr": "^2.13.5",
     "infoclimat": "^1.0.3",
     "johnny-five": "^0.10.6",
     "lame": "^1.2.4",

@@ -19,14 +19,19 @@ class Player {
     this.stop();
     this.playing = sine();
   }
-  play(stream, cb) {
+  play(stream, options={sine: true}) {
     this.stop();
     const speaker = play(stream);
     this.playing = speaker;
     return new Promise((resolve, reject) => {
       speaker.on("finish", () => {
         resolve();
-        (cb || this.sine)();
+        if (options.cb) {
+          cb();
+        }
+        if (options.sine) {
+          this.sine();
+        }
       });
     });
   }
