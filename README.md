@@ -197,7 +197,7 @@ return Oscillator({
 
 Ceci crée le son de la porteuse en La 440Hz et l'envoie directement sur l'audio avec `pipe`.
 
-Donc lorsqu'on décrochera le téléphone, on recevra l'évènement `hangupButton.on("up")`, et il faudra déclenchera cette fonction pour entendre la porteuse dans le combiné.
+Donc lorsqu'on décrochera le téléphone, on recevra l'évènement `hangupButton.on("up")`, et il faudra déclencher cette fonction pour entendre la porteuse dans le combiné.
 
 #### Lecture fichiers son
 
