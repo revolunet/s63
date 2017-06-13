@@ -222,16 +222,16 @@ Comme expliqué plus haut, le cadran émet autant d'impulsions que le numéro co
 
 A chaque numéro composé, on attends 500ms voir si l'utilisateur compose un autre numéro et sinon on décide qu'il a terminé.
 
- - 5 -> 5 impulsions
+ - 5 -> 5 impulsions -> 5
  - pause < 500ms
- - 3 -> 3 impulsions
+ - 3 -> 3 impulsions -> 53
  - pause < 500ms
- - 7 -> 7 impulsions
+ - 7 -> 7 impulsions -> 537
  - pause > 500ms -> terminé, numéro composé = 537
 
 Nous pouvons représenter notre Rotary sous forme de classe, qui gerera la logique de compte et temporisation des impulsions et enverra un event `compositionend` lorsque la composition sera terminée.
 
-Voici un exemple d'implémentation (Rotary.js) :
+Voici un exemple d'implémentation ([Rotary.js](./code/src/Rotary.js)) :
 
 ```js
 var EventEmitter = require('events').EventEmitter;
@@ -298,7 +298,7 @@ var rotaryButton = new five.Button({
   invert: true
 });
 
-// lorsqu'on detecte une impulsion, on envoie l'info à notre classe Rotary
+// lorsqu'on detecte une impulsion, on envoie l'info à notre instance de Rotary
 rotaryButton.on("up", () => rotary.onPulse());
 
 // lorsque le rotary nous indique que la composition est terminée (timeout > 2000ms)
