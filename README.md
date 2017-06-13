@@ -8,6 +8,8 @@ Mes connaissances en éléctronique sont très limitées donc n'hésitez pas à 
 
 Intéressons-nous au mythique téléphone **SOCOTEL S63**, conçu au debut des années 60, qui a été énorme un succès commercial (des dizaines de millions d'exemplaires vendus) et reste un petit bijou de l'industrie de cette époque, d'une conception simple mais très fonctionnelle et d'une durabilité impressionnante. On peut le retrouver un peu partout dans le monde et dans les brocantes pour moins de 10€.
 
+Un autre avantage de ce modèle est que l'on peut y loger un RaspberryPi complet + ses modules sans problèmes.
+
 ![s63-kaki](./assets/s63-kaki.jpg)
 
 Vous pouvez retrouver l'ensemble du code et du matériel sur GitHub : http://github.com/revolunet/s63
@@ -40,25 +42,28 @@ Il est également capable de se connecter à Internet, par RJ45, ou WiFI sur la 
 
 ### Le cadran
 
-Ce cadran rotatif est une jolie pièce de mécanique, qui convertit la rotation du cadran en un nombre d'impulsions correspondant, comme on peut le voir sur ces images, en bas à gauche. Il nous suffit alors de compter le nombre d'impulsions pour connaitre le numéro composé :)
+Ce cadran rotatif est une jolie pièce de mécanique, qui convertit la rotation du cadran en un nombre d'impulsions correspondant, comme on peut le voir sur ces images (au ralenti), en bas à gauche. Il nous suffit alors de compter le nombre d'impulsions pour connaitre le numéro composé :)
 
 ![cadran-s63](./assets/anim-cadran.gif)
 
 Les câbles qui nous intéressent sont donc les deux à gauche : le rouge et le "rouge alterné". Je ne sais pas à quoi servent les autres.
 
-Nous brancherons ces deux cables directement aux pins 8 et 10 du RaspberryPi, lequel écoutera le nombre d'impulsions pour en déduire le numéro composé.
+Nous brancherons ces deux cables directement aux pins 9 (GND) et 11 (GPIO17) du RaspberryPi, lequel écoutera le nombre d'impulsions pour en déduire le numéro composé.
 
 ### Le combiné
 
 Le combiné du S63 est un très classique haut-parleur + micro, que nous allons pouvoir brancher directement sur la sortie audio du RaspberryPi. L'ecouteur secondaire, un autre charme du S63, sera branché en parallèle.
 
+Par chance, l'audio du RaspberryPi est juste assez puissant pour qu'on entende bien, donc pas besoin d'amplificateur audio.
+
 ### La sonnerie
 
-La sonnerie du S63 est déclenchée par un moteur qui tape alternativement sur 2 cloches à la fréquence de 50Hz.
+La sonnerie du S63 est déclenchée par un moteur qui frappe alternativement sur 2 cloches à la fréquence de 50Hz.
 
-Il suffit d'alimenter ce moteur avec une tension alternative de 80V pour que cela sonne correctement. N'ayant pas trouvé de moyen simple de réduire du 220V AC en 80V AC, j'utilise le 220V directement et ca fonctionne également.
+Il suffirait d'alimenter ce moteur avec une tension alternative de 40 à 80V pour que cela sonne correctement. N'ayant pas trouvé de moyen simple de réduire du 220V AC en 80V AC, j'utilise le 220V directement et ca fonctionne également.
 
 ⚠️ **Ne manipulez jamais de courant 220V directement, risque d'éléctrocution fatale !** ⚠️
+
 ⚠️ **Ne branchez par le courant lorsque le capot du téléphone est ouvert** ⚠️
 
 ![sonnerie-s63](./assets/sonnerie.jpg)
@@ -67,13 +72,13 @@ Nous allons utliser un module relai qui sera commandé par le RaspberryPi pour a
 
 ![relai](./assets/relai.jpg)
 
-L'alimentation de la sonnerie se fait par les pins 13 et 17 du S63
+L'alimentation de la sonnerie se fait par les pins 13 et 17 du S63, que nous connecterons via la relai aux pins 7 (GPIO4), 6 (GND) et 4(VCC) du RaspberryPi.
 
 ### L'interrupteur de décroché
 
 Lorsque l'on pose ou décroche le combiné, un interrupteur déclenche la fermeture du circuit de sonnerie.
 
-Cet interrupteur arrive sur les pins 7 et 11 du S63
+Cet interrupteur arrive sur les pins 7 et 11 du S63 qui seront reliés aux pins 39 (GND) et 40 (GPIO21) du RaspberryPi.
 
 ## Schema du montage
 
@@ -85,6 +90,19 @@ Voici un schema (naïf) du montage final, réalisé avec [Fritzing](http://fritz
 
 ![s63-header](./assets/s63-header.jpg)
 
+
+Raspberry Physical Pin | target | About
+:----:|:----:|-----
+9  | rotary red | rotary pulse
+11 | rotary red/white | rotary pulse GND
+4  | RELAY VCC | alim relai sonnerie
+7  | RELAY R1 | active sonnerie
+5  | RELAY R2 | inutilisé
+6  | RELAY GND | relai sonnerie GND
+40 | S63 7 | interr décroché
+39 | S63 11 | interr décroché GND
+
+
 Il n'y a plus que 4 cables connectés sur le header du téléphone, les autres sont directement reliés au RaspberryPi.
 
 Et voilà pour la partie hardware !
@@ -95,9 +113,9 @@ Il ne reste plus qu'à orchestrer tout ça avec un peu de **JavaScript**.
 
 Maintenant que nous avons branché tous les organes au RaspberryPi, il ne nous reste plus qu'à programmer le "cerveau" de notre téléphone, qui sera chargé de réagir en fonction de ce que l'on fait sur le téléphone.
 
-Commençons par définir ce que nous voulons **exactement** (les "specs") :
+Commençons par définir **exactement** ce que nous voulons faire  (les "specs") :
 
- - quand je décroche, je veux entendre la fameuse porteuse : c'est par convention un LA à 440Hz
+ - quand je décroche, je veux entendre la fameuse porteuse (c'est par convention un La à 440Hz)
  - en fonction du numéro composé sur le cadran, je veux déclencher des sons particuliers :
       - **1** : météo du jour
       - **2** : une blague
@@ -106,6 +124,8 @@ Commençons par définir ce que nous voulons **exactement** (les "specs") :
  - lorsque je raccroche, les sons doivent se couper
 
 Pour orchestrer tout cela, nous allons utiliser l'excellent framework open-source [johnny-five](https://johnny-five.io) qui permet de contrôller de nombreuses cartes hardware avec une API simple et haut-niveau.
+
+Je vais détailler une partie du code mais le projet complet est disponible sur GitHub : http://github.com/revolunet/s63
 
 ### Préparation de la RaspberryPi
 
@@ -145,7 +165,9 @@ board.on("ready", function() {
 });
 ```
 
-Pour lancer ce code depuis la RaspberryPi, executez `node index.js` dans le terminal. Le script doit se lancer et lorsque vous décrochez ou raccrochez le combiné vous verrez apparaitre les messages de log dans le terminal.
+Pour lancer ce code depuis la RaspberryPi, executez `node index.js` dans le terminal.
+
+Le script doit se lancer et lorsque vous décrochez ou raccrochez le combiné vous verrez apparaitre les messages de log dans le terminal.
 
 ### Audio
 
@@ -287,7 +309,7 @@ rotary.on("compositionend", number => {
 })
 ```
 
-#### Affectation de sons à un numéro composé
+### Affectation de sons à un numéro composé
 
 Il suffit maintenant de choisir le bon son en fonction du numéro composé.
 
@@ -338,7 +360,7 @@ Pour le cas de la météo, des blagues ou des infos, c'est un petit peu plus com
 
 Voici un extrait du code en question :
 
-```
+```js
 const getUrlStream = url => fetch(url).then(res => res.body).catch(e => console.log(e));
 const getTTSStream = text => getUrlStream(`http://translate.google.com/translate_tts?tl=fr&q=${encodeURIComponent(text)}&client=gtx&ie=UTF-8`);
 
@@ -348,6 +370,54 @@ infoclimat.getNextWeatherInFrench("48.856578,2.351828").then(text => {
 ```
 
 Avec ça vous pouvez donc créer à la volée de l'audio à partir de texte !
+
+Exemples : [meteo](./code/plan/1/index.js) [blagues](./code/plan/2/index.js) ou [infos](./code/plan/4/index.js)
+
+### Faire sonner le téléphone
+
+Il nous faut pour cela activer/désactiver le relai qui laisse passer le courant (220v ⚠️) dans le circuit.
+
+Le relai est branché en mode "Normalement Ouvert" (NO) et branché comme suit au RaspberryPi :
+
+ - VCC : pin #4
+ - R1  : pin #7
+ - GND : pin #9
+
+Il faudra un peu plus de logique pour gérer l'alternance et le décroché mais voici le fonctionnement  basique :
+
+```js
+var ringRelay = new five.Relay({
+  pin: "GPIO4",
+  type: "N0"
+});
+
+// ring
+ringRelay.close();
+
+// stop after 1000ms
+setTimeout(ringRelay.open, 1000);
+```
+
+Voici un exemple d'implémentation de la logique de sonnerie avec [xstream](https://github.com/staltz/xstream)
+
+**NB :** je cherche quelqu'un pour m'aider à ce sujet sur xstream/rxjs/whateverRx :)
+
+```js
+var xs = require('xstream').default;
+var fromEvent = require('xstream/extra/fromEvent').default;
+var delay = require('xstream/extra/delay').default;
+
+const RING_INTERVAL = 1000;
+const RING_TIMEOUT = 5000;
+
+// pickup events stream
+var pickup$ = fromEvent(hangupButton, 'up').mapTo('pickup');
+// hangups events stream. drop the first one on program start;
+var hangup$ = fromEvent(hangupButton, 'down').mapTo('hangup').drop(1);
+// stream periodically until pickup or timeout
+var ring$ = xs.periodic(RING_INTERVAL).startWith(0).endWhen(pickup$).endWhen(xs.periodic(RING_TIMEOUT).take(1));
+```
+
 
 
 ### Lancement au démarrage
