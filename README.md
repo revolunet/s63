@@ -338,7 +338,7 @@ Pour le cas de la météo, des blagues ou des infos, c'est un petit peu plus com
 
 Voici un extrait du code en question :
 
-```
+```js
 const getUrlStream = url => fetch(url).then(res => res.body).catch(e => console.log(e));
 const getTTSStream = text => getUrlStream(`http://translate.google.com/translate_tts?tl=fr&q=${encodeURIComponent(text)}&client=gtx&ie=UTF-8`);
 
