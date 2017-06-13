@@ -381,7 +381,7 @@ Le relai est branché en mode "Normalement Ouvert" (NO) et branché comme suit a
 
  - VCC : pin #4
  - R1  : pin #7
- - GND : pin #9
+ - GND : pin #6
 
 Il faudra un peu plus de logique pour gérer l'alternance et le décroché mais voici le fonctionnement  basique :
 
