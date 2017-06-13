@@ -8,6 +8,8 @@ Mes connaissances en éléctronique sont très limitées donc n'hésitez pas à 
 
 Intéressons-nous au mythique téléphone **SOCOTEL S63**, conçu au debut des années 60, qui a été énorme un succès commercial (des dizaines de millions d'exemplaires vendus) et reste un petit bijou de l'industrie de cette époque, d'une conception simple mais très fonctionnelle et d'une durabilité impressionnante. On peut le retrouver un peu partout dans le monde et dans les brocantes pour moins de 10€.
 
+Un autre avantage de ce modèle est que l'on peut y loger un RaspberryPi complet + ses modules sans problèmes.
+
 ![s63-kaki](./assets/s63-kaki.jpg)
 
 Vous pouvez retrouver l'ensemble du code et du matériel sur GitHub : http://github.com/revolunet/s63
