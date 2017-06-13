@@ -6,7 +6,7 @@ Ma passion pour le détournement d'objets prend de plus en plus de place, et je 
 
 Mes connaissances en éléctronique sont très limitées donc n'hésitez pas à me corriger et faire vos suggestions par email : [julien@revolunet.com](mailto:julien@revolunet.com) ou twitter : [@revolunet](http://twitter.com/revolunet).
 
-Intéressons-nous au mythique téléphone **SOCOTEL S63**, conçu au debut des années 60, qui a été énorme un succès commercial (des dizaines de millions d'exemplaires vendus) et reste un petit bijou de l'industrie de cette époque, d'une conception simple mais très fonctionnelle et d'une durabilité impressionnante. On peut le retrouver un peu partout dans le monde et dans les brocantes pour moins de 10€.
+Intéressons-nous au mythique téléphone **SOCOTEL S63**, conçu au debut des années 60, qui a été énorme un succès commercial (des dizaines de millions d'exemplaires vendus) et reste un petit bijou de l'industrie de cette époque, d'une conception simple mais très fonctionnelle et d'une durabilité impressionnante. On peut le retrouver un peu partout dans le monde et dans les brocantes en très bon état pour moins de 10€.
 
 Un autre avantage de ce modèle est que l'on peut y loger un RaspberryPi complet + ses modules sans problèmes.
 
@@ -129,7 +129,7 @@ Je vais détailler une partie du code mais le projet complet est disponible sur 
 
 ### Préparation de la RaspberryPi
 
-La première chose à faire est d'installer un système linux sur la RaspberryPi. Téléchargez [Raspian](https://downloads.raspberrypi.org/raspbian_lite_latest), installez-le sur une carte SD, puis [installez NVM](https://gist.github.com/revolunet/f85a6fbe8b2688632c288f26010c9542#nvm-setup) et [johnny-five](https://johnny-five.io). Plus d'infos sur ma [cheatsheet RaspberryPi](https://gist.github.com/revolunet/f85a6fbe8b2688632c288f26010c9542)
+La première chose à faire est d'installer un système linux sur la RaspberryPi. Téléchargez [Raspbian Lite](https://downloads.raspberrypi.org/raspbian_lite_latest), installez-le sur une carte SD, puis [installez NVM](https://gist.github.com/revolunet/f85a6fbe8b2688632c288f26010c9542#nvm-setup) et [johnny-five](https://johnny-five.io). Plus d'infos sur ma [cheatsheet RaspberryPi](https://gist.github.com/revolunet/f85a6fbe8b2688632c288f26010c9542)
 
 Johnny-five permet de gérer les boards (Arduino, RaspberryPi...) mais aussi tous les modules/composants que l'on peut y connecter (relais, boutons, leds...). Très bien documenté, ce framework permet de gérer facilement la plupart des composants, et de le combiner avec les dizaines de milliers de librairies open-source disponibles dans l'ecosystème JavaScript/npm.
 
