@@ -46,7 +46,7 @@ Ce cadran rotatif est une jolie pièce de mécanique, qui convertit la rotation 
 
 ![cadran-s63](./assets/anim-cadran.gif)
 
-Les câbles qui nous intéressent sont donc les deux à gauche : le rouge et le "rouge alterné". Je ne sais pas à quoi servent les autres.
+Les câbles qui nous intéressent sont donc les deux à gauche : le rouge et le "rouge alterné". Le bleu et le blanc servent à informer de l'activité du cadran : dès qu'on le tourne il laisse passer le courant et dès qu'il est de retour en position normal il se ferme. (merci @Tekkharibo)
 
 Nous brancherons ces deux cables directement aux pins 9 (GND) et 11 (GPIO17) du RaspberryPi, lequel écoutera le nombre d'impulsions pour en déduire le numéro composé.
 
